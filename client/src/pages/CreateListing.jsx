@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import {
+/*import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from 'firebase/storage';
-import { app } from '../firebase';
+import { app } from '../firebase';*/
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -60,7 +60,7 @@ export default function CreateListing() {
     }
   };
 
-  const storeImage = async (file) => {
+  /*const storeImage = async (file) => {
     return new Promise((resolve, reject) => {
       const storage = getStorage(app);
       const fileName = new Date().getTime() + file.name;
@@ -83,7 +83,39 @@ export default function CreateListing() {
         }
       );
     });
-  };
+  };*/
+
+  function storeImage(file) {
+    return new Promise((resolve, reject) => {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", import.meta.env.VITE_UPLOAD_PRESET);
+      const cloudName = import.meta.env.VITE_CLOUD_NAME;
+      data.append("cloud_name", cloudName);
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+  
+      const xhr = new XMLHttpRequest();
+  
+      xhr.open("POST", uploadUrl);
+  
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response.url);
+        } else {
+          setUploadError(`Upload failed with status: ${xhr.status}`);
+          reject(`Upload failed with status: ${xhr.status}`);
+        }
+      };
+  
+      xhr.onerror = () => {
+        setUploadError("An error occurred during the upload.");
+        reject("An error occurred during the upload.");
+      };
+  
+      xhr.send(data);
+    });
+  }
 
   const handleRemoveImage = (index) => {
     setFormData({
@@ -153,6 +185,12 @@ export default function CreateListing() {
       setLoading(false);
     }
   };
+
+  function fileInput(){
+    setUploadError('');
+    setError('');
+  }
+
   return (
     <main className='p-3 max-w-4xl mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>

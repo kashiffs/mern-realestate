@@ -1,12 +1,12 @@
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
-import {
+/*import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from 'firebase/storage';
-import { app } from '../firebase';
+import { app } from '../firebase';*/
 import {
   updateUserStart,
   updateUserSuccess,
@@ -42,7 +42,7 @@ export default function Profile() {
     }
   }, [file]);
 
-  const handleFileUpload = (file) => {
+  /*const handleFileUpload = (file) => {
     const storage = getStorage(app);
     const fileName = new Date().getTime() + file.name;
     const storageRef = ref(storage, fileName);
@@ -64,7 +64,46 @@ export default function Profile() {
         );
       }
     );
-  };
+  };*/
+
+  function handleFileUpload(file) {
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", /*process.env.REACT_APP_UPLOAD_PRESET*/ "first_time_using_cloudinary");
+    data.append("cloud_name", /*process.env.REACT_APP_CLOUD_NAME*/ "diwhjajr2");
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("POST", "https://api.cloudinary.com/v1_1/diwhjajr2/image/upload");
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setProgress(percentComplete);
+      }
+    });
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        setProfileImage(response.url);
+        setFormData({...formData, avatar: response.url});
+        setUploadError(null);
+      } else {
+        setUploadError("Upload failed with status: " + xhr.status);
+      }
+      setProgress(0);
+    };
+
+    xhr.onerror = () => {
+      setUploadError("An error occurred during the upload.");
+      setProgress(0);
+    };
+
+    xhr.send(data);
+    
+  }
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
